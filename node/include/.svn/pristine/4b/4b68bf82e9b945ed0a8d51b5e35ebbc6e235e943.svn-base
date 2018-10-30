@@ -1,0 +1,105 @@
+/*******************************************************************************
+ *
+ * 版权：中国电子科技集团公司第三十二研究所
+ * 时间：2016年05月27日
+ * 创建：liurongkuan
+ * 修改：
+ *
+ */
+
+/**
+ * @file    rerosDDSRos.h
+ * @author  liurongkuan
+ *
+ * @brief   Connectivity features of the middleware.
+ */
+
+#ifndef _REROSDDSROS_H_
+#define _REROSDDSROS_H_
+
+/*===========================================================================*/
+/* HEADER FILES                                                              */
+/*===========================================================================*/
+
+#include <stdio.h>
+#include <symtbl.h> 
+#include <string.h>
+#include <pthread.h>
+#include <taskLib.h>
+#include <ndds/ndds_c.h>
+#include <ndds/dds_c/dds_c_subscription.h>
+
+#include "rerosBase.h"
+#include "rerosHandlers.h"
+
+/*===========================================================================*/
+/* GLOBAL PROTOTYPES                                                         */
+/*===========================================================================*/
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*===========================================================================*/
+/* CREATE AND DELETE DDS ENTITY                                              */
+/*===========================================================================*/
+int dds_ros_init(void);
+int dds_ros_uninit(void);
+
+int dds_create_writer(DDS_OctetsDataWriter ** octets_writer, const char * topicName);
+
+int dds_delete_writer(DDS_OctetsDataWriter *octets_writer);
+
+int dds_send_data(DDS_OctetsDataWriter *octets_writer, 
+				  	  	  	  const DDS_Octets * data);
+
+int dds_create_reader(DDS_OctetsDataReader ** octets_reader, 
+									const char * topicName, 
+									DDS_WaitSet ** waitset,
+									DDS_Condition **  cond,
+									RerosSem * readerSemp);
+
+int dds_delete_reader(DDS_OctetsDataReader * octets_reader, 
+								DDS_WaitSet * waitset,
+								RerosSem * readerSemp );
+
+/*===========================================================================*/
+/* SERIALIZE  AND  DESERIALIZE                                               */
+/*===========================================================================*/
+#if REROS_ENDIANNESS == 321
+#define copy_raw_to_octets(value, oct_value) \
+  copy_raw_to_octets_rev(&(value), sizeof(value), (oct_value))
+#define copy_octets_to_raw(oct_value, value) \
+  copy_octets_to_raw_rev((oct_value), &(value), sizeof(value))
+#else
+#define copy_raw_to_octets(value, oct_value) \
+  copy_raw_to_octets_for(&(value), sizeof(value), (oct_value))
+#define copy_octets_to_raw(oct_value, value) \
+  copy_octets_to_raw_fw((oct_value), &(value), sizeof(value))
+#endif
+
+int copy_raw_to_octets_for( const void *bufp, 
+							size_t buflen, 
+							unsigned char * oct_value);
+int copy_raw_to_octets_rev( const void *bufp, 
+							size_t buflen, 
+							unsigned char * oct_value);
+int copy_string_to_octets( RerosString * src_objp, 
+							unsigned char * oct_value);
+
+int copy_octets_to_raw_fw( unsigned char * oct_value, 							 
+							const void *bufp,
+							size_t buflen );
+int copy_octets_to_raw_rev( unsigned char * oct_value,							
+							const void *bufp,
+							size_t buflen );
+int copy_octets_to_string( unsigned char * oct_value,
+		 	 	 	 	   RerosString * datap );
+
+size_t get_string_size(RerosString *objp);
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* _REROSDDSROS_H_ */
